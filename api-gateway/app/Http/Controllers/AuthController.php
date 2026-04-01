@@ -63,10 +63,8 @@ class AuthController extends Controller
             ], 422);
         }
 
-        // Buscar usuario por email
         $user = User::where('email', $request->email)->first();
 
-        // Verificar que existe y que la contraseña es correcta
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json([
                 'success' => false,
@@ -74,10 +72,7 @@ class AuthController extends Controller
             ], 401);
         }
 
-        // Revocar tokens anteriores para no acumular
-        $user->tokens()->delete();
-
-        // Generar nuevo token
+        // ← Quitamos $user->tokens()->delete() para permitir múltiples sesiones
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
