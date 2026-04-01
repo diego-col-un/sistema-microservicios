@@ -10,6 +10,7 @@ load_dotenv()
 
 app = Flask(__name__)
 app.config.from_object(Config)
+app.url_map.strict_slashes = False
 
 db.init_app(app)
 migrate = Migrate(app, db)
