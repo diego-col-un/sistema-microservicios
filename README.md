@@ -1,7 +1,7 @@
-# Sistema Empresarial — Arquitectura de Microservicios
+# Sistema ManiEje — Arquitectura de Microservicios
 
 ## Descripción
-Sistema de gestión empresarial para un taller de vehículos y restaurante de comidas rápidas, construido con arquitectura de microservicios. Desarrollado como proyecto académico para la Universidad Nacional de Colombia —  Manizales.
+Sistema de gestión empresarial para un taller de vehículos y restaurante de comidas rápidas llamado ManiEje, construido con arquitectura de microservicios. Desarrollado como proyecto académico para la Universidad Nacional de Colombia —  Manizales.
 
 ## Arquitectura
 ```
