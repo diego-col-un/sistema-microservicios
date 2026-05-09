@@ -2,6 +2,26 @@ const express      = require('express')
 const router       = express.Router()
 const Transaccion  = require('../models/transaccion')
 
+// ──────────────────────────────────────────────────────────
+// Middleware de Seguridad (Debe ir ANTES de cualquier ruta)
+// ──────────────────────────────────────────────────────────
+router.use(function(req, res, next) {
+    const tokenEsperado = process.env.GATEWAY_INTERNAL_TOKEN;
+    const tokenRecibido = req.headers['x-gateway-secret'];
+
+    // LOGS DE CONTROL: Mira tu terminal cuando hagas la petición
+    console.log(`[Seguridad] Recibido: ${tokenRecibido} | Esperado: ${tokenEsperado}`);
+
+    // Validación estricta: Si no hay token o no coincide
+    if (!tokenRecibido || tokenRecibido !== tokenEsperado) {
+        return res.status(403).json({
+            success: false,
+            message: "Acceso denegado: Esta API solo acepta peticiones desde el Gateway."
+        });
+    }
+
+    next(); // Solo si pasa la validación, continúa a las rutas de abajo
+});
 // ─────────────────────────────────────────
 // GET /api/caja — listar todas
 // ─────────────────────────────────────────

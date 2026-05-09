@@ -14,21 +14,22 @@ class GatewayController extends Controller
     {
         try {
             $url = rtrim($baseUrl, '/') . '/' . ltrim($path, '/');
+            $token = env('GATEWAY_INTERNAL_TOKEN', 'mi_token_secreto_123');
 
+            // Usamos Http::withHeaders y pasamos los datos directamente
             $response = Http::timeout(10)
-                ->withHeaders(['Content-Type' => 'application/json'])
-                ->send($request->method(), $url, [
-                    'json' => $request->all()
-                ]);
+                ->withHeaders([
+                    'X-Gateway-Secret' => $token,
+                    'Accept'           => 'application/json',
+                ])
+                ->{strtolower($request->method())}($url, $request->all());
 
             return response()->json($response->json(), $response->status());
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Microservicio no disponible',
-                'error'   => $e->getMessage()
-            ], 503);
+                'message' => 'Error al conectar con el microservicio: ' . $e->getMessage()
+            ], 500);
         }
     }
 

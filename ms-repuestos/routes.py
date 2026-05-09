@@ -3,16 +3,22 @@ from models import Repuesto, db
 from functools import wraps
 import os
 
-def require_token(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        token = request.headers.get('Authorization')
-        if token != f"Token {os.getenv('API_TOKEN', 'miclave123')}":
-            return jsonify({'error': 'No autorizado'}), 401
-        return f(*args, **kwargs)
-    return decorated
-
 def register_routes(app):
+    # ─────────────────────────────────────────
+    # Middleware de Seguridad: Bloqueo de acceso directo
+    # ─────────────────────────────────────────
+    @app.before_request
+    def limit_to_gateway():
+        # Validamos el token que configuramos en el .env de Laravel
+        token_esperado = os.getenv('GATEWAY_INTERNAL_TOKEN', 'mi_token_secreto_123')
+        token_recibido = request.headers.get('X-Gateway-Secret')
+        
+        if token_recibido != token_esperado:
+            # Si alguien intenta entrar por el puerto 8002 directamente, lo rebota
+            return jsonify({
+                'success': False, 
+                'message': 'Acceso denegado: Debe pasar por el API Gateway.'
+            }), 403
 
     # ─────────────────────────────────────────
     # GET /api/repuestos — listar todos

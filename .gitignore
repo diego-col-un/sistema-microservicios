@@ -1,5 +1,8 @@
-# Python
+# Python (Asegúrate de cubrir .venv y venv)
+.venv/
 venv/
+env/
+ENV/
 __pycache__/
 *.pyc
 *.pyo

@@ -1,8 +1,23 @@
-from flask import jsonify, request
+from flask import jsonify, request, abort
 from firebase_admin import db
+import os
 
 def register_routes(app):
 
+    # ─────────────────────────────────────────
+    # Middleware de Seguridad para el Gateway
+    # ─────────────────────────────────────────
+    @app.before_request
+    def limit_to_gateway():
+        # Verificamos que el token coincida con el de Laravel .env
+        token_esperado = os.getenv('GATEWAY_INTERNAL_TOKEN', 'mi_token_secreto_123')
+        token_recibido = request.headers.get('X-Gateway-Secret')
+        
+        if token_recibido != token_esperado:
+            return jsonify({
+                'success': False, 
+                'message': 'Acceso denegado: Use el Gateway de Laravel.'
+            }), 403
     # ─────────────────────────────────────────
     # GET /api/menu — listar todos los items
     # ─────────────────────────────────────────
