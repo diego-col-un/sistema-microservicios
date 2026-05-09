@@ -1,6 +1,4 @@
 ## 1.  Documentación Integral de QA 
-Puedes estructurar esta sección en tu informe para mostrar la trazabilidad completa del sistema:
-
 Resumen Ejecutivo de Pruebas
 Se implementó una suite de 15 tests unitarios y de integración para validar la seguridad perimetral y la integridad de los datos en una arquitectura políglota de microservicios.
 
