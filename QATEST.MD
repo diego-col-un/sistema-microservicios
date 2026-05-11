@@ -44,3 +44,35 @@ Autorización Exitosa: Confirmación de acceso mediante el secreto compartido (T
 Aislamiento: Los tests de los microservicios de Menú y Reservas fueron diseñados para ejecutarse de forma independiente, utilizando técnicas de Mocking y configuraciones específicas de entorno (pytest.ini) para garantizar la repetibilidad sin depender de servicios externos.
 
 Consistencia: Todos los módulos validan el flujo de seguridad mediante el token compartido X-Gateway-Secret, asegurando la integridad de la arquitectura de microservicios planteada en la asignatura.
+
+## 🚀 Pruebas de Estrés y Carga (Stress Testing)
+
+Para validar la resiliencia de la arquitectura políglota, se implementó una suite de pruebas utilizando **Locust**, simulando el comportamiento de usuarios concurrentes autenticados mediante el sistema de tokens (Sanctum) del API Gateway.
+
+### 1. Matriz de Escenarios de Ejecución
+Se definieron 10 configuraciones específicas para hallar los límites del sistema y la capacidad de respuesta de los microservicios:
+
+| ID | Nombre del Test | Usuarios (Peak) | Ramp-up | Objetivo (KPI) |
+| :--- | :--- | :--- | :--- | :--- |
+| **ST-01** | Carga Repuestos | 50 | 2 | Estabilidad en microservicio de Inventario (Flask). |
+| **ST-02** | Estrés Reservas | 150 | 5 | Validar concurrencia en microservicio de Citas (Django). |
+| **ST-03** | Carga Menú | 100 | 5 | Medir persistencia y lectura en base de datos. |
+| **ST-04** | Gateway Latency | 200 | 10 | Evaluación del orquestador central (Laravel). |
+| **ST-05** | Caja Concurrente | 80 | 4 | Capacidad de respuesta en microservicio Financiero (Node.js). |
+| **ST-06** | Security Spam | 500 | 50 | Validación de rechazo 401/403 ante peticiones sin token. |
+| **ST-07** | Spike Test | 400 | 100 | Capacidad de recuperación ante aumentos súbitos de tráfico. |
+| **ST-08** | Soak Test | 50 | 1 | Estabilidad de memoria en ejecución de larga duración. |
+| **ST-09** | Gestión Personal | 60 | 3 | Estresar endpoint de consulta de Empleados. |
+| **ST-10** | Breakpoint Test | 1000 | 20 | Punto de colapso y monitoreo de degradación. |
+
+### 2. Resultados y Métricas Globales
+Tras la ejecución de la suite completa, se consolidaron los siguientes hallazgos:
+
+* **Tasa de Éxito:** 100% (0 fallos registrados bajo carga máxima).
+* **Rendimiento (RPS):** Pico máximo de ~180 peticiones por segundo.
+* **Latencia Promedio:** ~7.4 segundos en condiciones de alta concurrencia local.
+
+### 3. Conclusiones Técnicas
+1.  **Resiliencia del API Gateway:** El orquestador Laravel manejó correctamente el flujo hacia los servicios de Python y Node.js sin presentar errores de conexión.
+2.  **Escalabilidad:** La arquitectura soporta el crecimiento de usuarios, aunque se identifica el hardware local como el principal cuello de botella para la latencia.
+3.  **Gestión de Seguridad:** Se confirmó que el sistema protege los endpoints críticos, rechazando peticiones no autorizadas de forma eficiente bajo estrés.
