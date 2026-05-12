@@ -1,0 +1,236 @@
+services:
+
+  # ============================================================
+  # BASES DE DATOS
+  # Volúmenes tipo named volume: Docker gestiona la ubicación
+  # física en el host. Los datos persisten entre reinicios.
+  # ============================================================
+
+  db-postgres:
+    image: postgres:15-alpine
+    container_name: db_reservas
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: reservas_db
+    networks:
+      - sistema-network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      # pg_isready verifica que Postgres acepte conexiones
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.30'
+
+  db-mysql-empleados:
+    image: mysql:8
+    container_name: db_empleados
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: empleados_db
+    networks:
+      - sistema-network
+    volumes:
+      - mysql_empleados_data:/var/lib/mysql
+    healthcheck:
+      # mysqladmin ping verifica que el motor esté listo para conexiones
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+          cpus: '0.30'
+
+  db-mysql-repuestos:
+    image: mysql:8
+    container_name: db_repuestos
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: repuestos_db
+    networks:
+      - sistema-network
+    volumes:
+      - mysql_repuestos_data:/var/lib/mysql 
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+          cpus: '0.30'
+
+  db-mongo:
+    image: mongo:7
+    container_name: db_caja
+    networks:
+      - sistema-network
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      # mongosh ping verifica que MongoDB esté operativo
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.30'
+
+  # ============================================================
+  # MICROSERVICIOS
+  # Bind mounts en el código fuente: los cambios locales se
+  # reflejan en el contenedor sin necesidad de reconstruir.
+  # ============================================================
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: gateway_laravel
+    ports:
+      - "8000:8000"               # Único punto de entrada desde el exterior
+    volumes:
+      - ./api-gateway:/var/www    # Sincroniza código fuente en tiempo real
+      - sqlite_data:/var/www/database  # La BD SQLite persiste entre reinicios
+      - /var/www/vendor
+    depends_on:
+      ms-reservas:
+        condition: service_started
+      ms-empleados:
+        condition: service_started
+      ms-caja:
+        condition: service_started
+      ms-menu:
+        condition: service_started
+      ms-repuestos:
+        condition: service_started
+    networks:
+      - sistema-network
+    env_file: ./api-gateway/.env
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.50'
+
+  ms-reservas:
+    build: ./ms-reservas
+    container_name: ms_reservas
+    depends_on:
+      db-postgres:
+        condition: service_healthy  # Arranca solo cuando Postgres está listo
+    networks:
+      - sistema-network
+    env_file: ./ms-reservas/.env
+    command: python manage.py runserver 0.0.0.0:8001
+    volumes:
+      - ./ms-reservas:/app
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+          cpus: '0.40'
+
+  ms-empleados:
+    build: ./ms-empleados
+    container_name: ms_empleados
+    depends_on:
+      db-mysql-empleados:
+        condition: service_healthy  # Arranca solo cuando MySQL empleados está listo
+    networks:
+      - sistema-network
+    env_file: ./ms-empleados/.env
+    command: python manage.py runserver 0.0.0.0:8005
+    volumes:
+      - ./ms-empleados:/app
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+          cpus: '0.40'
+
+  ms-caja:
+    build: ./ms-caja
+    container_name: ms_caja
+    depends_on:
+      db-mongo:
+        condition: service_healthy  # Arranca solo cuando MongoDB está listo
+    networks:
+      - sistema-network
+    env_file: ./ms-caja/.env
+    volumes:
+      - ./ms-caja:/app
+      - /app/node_modules 
+    deploy:
+      resources:
+        limits:
+          memory: 300M
+          cpus: '0.30'
+
+  ms-repuestos:
+    build: ./ms-repuestos
+    container_name: ms_repuestos
+    depends_on:
+      db-mysql-repuestos:
+        condition: service_healthy  # Arranca solo cuando MySQL repuestos está listo
+    networks:
+      - sistema-network
+    env_file: ./ms-repuestos/.env
+    volumes:
+      - ./ms-repuestos:/app
+    command: python app.py   
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.30'
+
+  ms-menu:
+    build: ./ms-menu
+    container_name: ms_menu
+    networks:
+      - sistema-network
+    env_file: ./ms-menu/.env
+    volumes:
+      - ./ms-menu:/app
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.30'
+
+# ============================================================
+# RED INTERNA
+# Todos los servicios se comunican por nombre de contenedor.
+# Ejemplo: ms-reservas llega a Postgres con host "db-postgres"
+# Solo api-gateway expone un puerto al exterior (8000).
+# ============================================================
+
+networks:
+  sistema-network:
+    driver: bridge
+
+# ============================================================
+# NAMED VOLUMES
+# Docker crea y administra estos volúmenes automáticamente.
+# Para inspeccionarlos: docker volume ls / docker volume inspect
+# ============================================================
+
+volumes:
+  postgres_data:          # Datos de PostgreSQL — ms-reservas
+  mysql_empleados_data:   # Datos de MySQL — ms-empleados
+  mysql_repuestos_data:   # Datos de MySQL — ms-repuestos
+  mongo_data:             # Datos de MongoDB — ms-caja
+  sqlite_data:            # Base de datos SQLite — api-gateway
