@@ -37,9 +37,10 @@ class GatewayController extends Controller
     // Reservas — Django :8001
     // ─────────────────────────────────────────
     public function reservas(Request $request, $path = '')
-    {
-        return $this->proxy($request, env('MS_RESERVAS_URL'), '/api/reservas/' . $path);
-    }
+{
+    $path = rtrim($path, '/') . '/';
+    return $this->proxy($request, env('MS_RESERVAS_URL'), '/api/reservas/' . $path);
+}
 
     // ─────────────────────────────────────────
     // Repuestos — Flask :8002
@@ -69,7 +70,8 @@ class GatewayController extends Controller
     // Empleados — Django :8005
     // ─────────────────────────────────────────
     public function empleados(Request $request, $path = '')
-    {
-        return $this->proxy($request, env('MS_EMPLEADOS_URL'), '/api/empleados/' . $path);
-    }
+{
+    $path = rtrim($path, '/') . '/';
+    return $this->proxy($request, env('MS_EMPLEADOS_URL'), '/api/empleados/' . $path);
+}
 }
