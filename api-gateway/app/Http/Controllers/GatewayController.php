@@ -38,9 +38,10 @@ class GatewayController extends Controller
     // ─────────────────────────────────────────
     public function reservas(Request $request, $path = '')
 {
-    $path = rtrim($path, '/') . '/';
+    $path = $path ? rtrim($path, '/') . '/' : '';
     return $this->proxy($request, env('MS_RESERVAS_URL'), '/api/reservas/' . $path);
 }
+
 
     // ─────────────────────────────────────────
     // Repuestos — Flask :8002
@@ -71,7 +72,7 @@ class GatewayController extends Controller
     // ─────────────────────────────────────────
     public function empleados(Request $request, $path = '')
 {
-    $path = rtrim($path, '/') . '/';
+    $path = $path ? rtrim($path, '/') . '/' : '';
     return $this->proxy($request, env('MS_EMPLEADOS_URL'), '/api/empleados/' . $path);
 }
 }
