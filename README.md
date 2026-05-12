@@ -1,7 +1,7 @@
 # Sistema ManiEje — Arquitectura de Microservicios
 
 ## Descripción
-Sistema de gestión empresarial para un taller de vehículos y restaurante de comidas rápidas llamado ManiEje, construido con arquitectura de microservicios. Desarrollado como proyecto académico para la Universidad Nacional de Colombia —  Manizales.
+Sistema de gestión empresarial para un taller de vehículos y restaurante de comidas rápidas llamado ManiEje, construido con arquitectura de microservicios. Desarrollado como proyecto académico para la Universidad Nacional de Colombia — Manizales.
 
 ## Arquitectura
 ```
@@ -32,7 +32,10 @@ Cliente (Thunder Client / Frontend)
 | ms-menu | Flask + Firebase Admin | Firebase Realtime DB | 8004 |
 | ms-empleados | Django 5 + DRF | MySQL | 8005 |
 
-##  Archivos requeridos (enviados por separado)
+## Archivos requeridos (no están en el repositorio)
+
+Estos archivos contienen credenciales y deben pedirse al autor:
+
 | Archivo | Carpeta destino |
 |---|---|
 | `firebase-key.json` | `ms-menu/` |
@@ -43,7 +46,71 @@ Cliente (Thunder Client / Frontend)
 | `.env` | `ms-menu/` |
 | `.env` | `ms-empleados/` |
 
-## Instalación y ejecución
+Además, crear un `.env` en la raíz del proyecto con:
+```env
+POSTGRES_PASSWORD=tu_password
+MYSQL_ROOT_PASSWORD=tu_password
+```
+
+---
+
+## Opción A — Levantar con Docker (recomendado)
+
+### Requisitos
+- Docker
+- Docker Compose
+
+### 1. Clonar el repositorio y agregar los archivos requeridos
+```bash
+git clone https://github.com/diego-col-un/sistema-microservicios
+cd sistema-microservicios
+# Copiar los .env de cada microservicio y el firebase-key.json
+# Crear el .env raíz con POSTGRES_PASSWORD y MYSQL_ROOT_PASSWORD
+```
+
+### 2. Construir y levantar todos los servicios
+```bash
+docker compose up --build
+```
+
+### 3. Aplicar migraciones (solo la primera vez)
+En otra terminal, con los contenedores corriendo:
+```bash
+docker compose exec api-gateway php artisan migrate --force
+docker compose exec ms-reservas python manage.py migrate
+docker compose exec ms-empleados python manage.py migrate
+docker compose exec ms-repuestos flask db upgrade
+```
+
+### 4. Verificar que todo esté corriendo
+```bash
+docker compose ps
+```
+Todos los servicios deben aparecer en estado `Up` y las bases de datos en `healthy`.
+
+### 5. Acceder al sistema
+```
+http://localhost:8000
+```
+
+### Comandos útiles
+```bash
+# Levantar en segundo plano
+docker compose up -d
+
+# Ver logs de un servicio
+docker compose logs ms-reservas
+
+# Bajar el sistema
+docker compose down
+
+# Reconstruir un solo servicio
+docker compose up -d --build ms-repuestos
+```
+
+---
+
+## Opción B — Levantar manualmente (sin Docker)
 
 ### Requisitos previos
 - PHP 8.3+ y Composer
@@ -107,6 +174,8 @@ pip install -r requirements.txt
 python manage.py migrate
 python manage.py runserver 8005
 ```
+
+---
 
 ## Endpoints
 
@@ -174,6 +243,8 @@ python manage.py runserver 8005
 | GET | /api/empleados/area/:area/ | Filtrar por área |
 | GET | /api/empleados/nomina/ | Ver nómina total |
 
+---
+
 ## Pruebas de rendimiento — Locust
 ```bash
 pip install locust
@@ -191,6 +262,8 @@ locust -f locustfile.py --host=http://localhost:8000
 
 ### Análisis
 El sistema mantiene 0% de fallos en las 3 pruebas, demostrando estabilidad. El tiempo de respuesta escala con la carga debido a que los servicios corren en modo desarrollo (single-thread). En producción con Docker y servidores WSGI como Gunicorn los tiempos mejorarían significativamente.
+
+---
 
 ## Diagrama del sistema
 ```mermaid
