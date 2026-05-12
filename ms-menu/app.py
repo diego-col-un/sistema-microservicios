@@ -21,4 +21,4 @@ routes.register_routes(app)
 
 if __name__ == '__main__':
     port = int(os.getenv('FLASK_PORT', 8004))
-    app.run(debug=os.getenv('FLASK_ENV') == 'development', port=port)
+    app.run(host='0.0.0.0', debug=os.getenv('FLASK_ENV') == 'development', port=port)

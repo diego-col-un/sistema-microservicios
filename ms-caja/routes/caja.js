@@ -6,7 +6,7 @@ const Transaccion  = require('../models/transaccion')
 // Middleware de Seguridad (Debe ir ANTES de cualquier ruta)
 // ──────────────────────────────────────────────────────────
 router.use(function(req, res, next) {
-    const tokenEsperado = process.env.GATEWAY_INTERNAL_TOKEN;
+    const tokenEsperado = process.env.INTERNAL_GATEWAY_TOKEN;
     const tokenRecibido = req.headers['x-gateway-secret'];
 
     // LOGS DE CONTROL: Mira tu terminal cuando hagas la petición

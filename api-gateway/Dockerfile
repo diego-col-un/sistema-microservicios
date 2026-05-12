@@ -5,7 +5,7 @@ FROM php:8.3-fpm-alpine
 RUN apk add --no-cache git curl libpng-dev libxml2-dev zip unzip sqlite-dev
 
 # 3. Instalacion de extensiones de PHP que laravel requiere para funcionar
-RUN docker-php-ext-install pdo_sqlite bcmatch
+RUN docker-php-ext-install pdo_sqlite bcmath
 
 # 4. Copiamos el ejecutable de Composer desde su imagen oficial (Multi-stage build)
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
